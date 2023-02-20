@@ -5,6 +5,7 @@ import (
 	"log"
 	"main/lib"
 	"main/models"
+	computing_models "main/models/computing"
 	"main/repository"
 	"main/services"
 	"math/rand"
@@ -173,7 +174,7 @@ func TestNodePortCreate(t *testing.T) {
 }
 
 func TestPodCreate(t *testing.T) {
-	podBody := models.PodBody{}
+	podBody := computing_models.PodBody{}
 	podBody.Name = Test.PodName
 	podBody.Namespace = "default"
 	podBody.ClaimName = faker.Word()
@@ -311,10 +312,10 @@ func TestCreateRoleBinding(t *testing.T) {
 	assert.NotNil(t, rolebinding)
 }
 
-func TestCreateCRD(t *testing.T) {
-	u := services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{}))
-	u.CreateCRD()
-}
+// func TestCreateCRD(t *testing.T) {
+// 	u := services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{}))
+// 	u.CreateCRD()
+// }
 
 func TestMain(m *testing.M) {
 	m.Run()

@@ -12,20 +12,6 @@ type RepositoryBody struct {
 	Name string `json:"name"`
 }
 
-type PodBody struct {
-	Name          string   `json:"name"`
-	Namespace     string   `json:"namespace"`
-	ContainerName string   `json:"container_name"`
-	Image         string   `json:"image"`
-	Command       []string `json:"command"`
-	ConfigmapName string   `json:"configmap_name"`
-	SecretName    string   `json:"secret_name"`
-	Port          int32    `json:"port"`
-	ClaimName     string   `json:"claim_name"`
-	VolumeName    string   `json:"volume_name"`
-	MountPath     string   `json:"mountpath"`
-}
-
 type ConfigMapBody struct {
 	Name      string            `json:"name"`
 	Namespace string            `json:"namespace"`

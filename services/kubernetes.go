@@ -6,6 +6,7 @@ import (
 	"errors"
 	"main/lib"
 	"main/models"
+	computing_models "main/models/computing"
 	"main/repository"
 
 	corev1 "k8s.io/api/core/v1"
@@ -29,7 +30,7 @@ func NewKubernetesService(logger lib.Logger, Repository repository.KubernetesRep
 
 }
 
-func (u KubernetesService) CreatePod(podBody models.PodBody) (*corev1.Pod, error) {
+func (u KubernetesService) CreatePod(podBody computing_models.PodBody) (*corev1.Pod, error) {
 	newpod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podBody.Name,
@@ -278,7 +279,7 @@ func (u KubernetesService) DeletePod(name, namespace string) error {
 	return nil
 }
 
-func (u KubernetesService) CreateCRD() error {
+func (u KubernetesService) CreateCRD(VMBody computing_models.VMBody) error {
 	c, err := client.New(config.GetConfigOrDie(), client.Options{})
 	if err != nil {
 		return err
@@ -288,11 +289,11 @@ func (u KubernetesService) CreateCRD() error {
 		"apiVersion": "kubevirt.io/v1",
 		"kind":       "VirtualMachine",
 		"metadata": map[string]interface{}{
-			"name":      "vm-example",
-			"namespace": "default",
+			"name":      VMBody.Name,
+			"namespace": VMBody.Namespace,
 		},
 		"spec": map[string]interface{}{
-			"running": false,
+			"running": true,
 			"template": map[string]interface{}{
 				"metadata": map[string]interface{}{
 					"labels": map[string]interface{}{
@@ -302,11 +303,8 @@ func (u KubernetesService) CreateCRD() error {
 				},
 				"spec": map[string]interface{}{
 					"domain": map[string]interface{}{
-						"cpu": map[string]interface{}{
-							"cores":   2,
-							"sockets": 1,
-							"threads": 4,
-						},
+						"cpu": VMBody.CPU,
+
 						"devices": map[string]interface{}{
 							"disks": []map[string]interface{}{
 								{
@@ -335,7 +333,7 @@ func (u KubernetesService) CreateCRD() error {
 
 						"resources": map[string]interface{}{
 							"requests": map[string]interface{}{
-								"memory": "1G",
+								"memory": VMBody.Memory,
 							},
 						},
 					},
@@ -377,6 +375,7 @@ func (u KubernetesService) CreateCRD() error {
 			},
 		},
 	}
+	vm.SetNamespace(VMBody.Namespace)
 	err = c.Create(context.Background(), vm)
 	if err != nil {
 		return err
@@ -388,7 +387,7 @@ func (u KubernetesService) GetPodsList(namespace string) ([]string, error) {
 	pods, err := u.Repository.Clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	var names []string
 	if err != nil || len(pods.Items) == 0 {
-		return nil, errors.New("Not found")
+		return nil, errors.New("not found")
 	} else {
 		names = make([]string, len(pods.Items))
 

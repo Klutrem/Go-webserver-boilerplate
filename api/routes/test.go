@@ -25,7 +25,6 @@ func (s TestRoutes) Setup() {
 	{
 		api.GET("/kube_get/:namespace", s.kubescontroller.GetPodList)
 		api.GET("/helm_get", s.kubescontroller.HGetReleaseRequest)
-		api.POST("/kube/add", s.kubescontroller.CreatePodRequest)
 		api.POST("/kube/create_config_map", s.kubescontroller.CreateOrUpdateConfigMapRequest)
 		api.POST("/kube/create_secret", s.kubescontroller.CreateOrUpdateSecretRequest)
 		api.POST("/kube/create_namespace", s.kubescontroller.CreateNamespaceRequest)

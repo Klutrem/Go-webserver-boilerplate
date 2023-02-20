@@ -19,9 +19,9 @@ type WorkspaceController struct {
 }
 
 // NewTestController creates new Test controller
-func NewWorkspaceController(TestService services.WorkspaceService, logger lib.Logger) WorkspaceController {
+func NewWorkspaceController(WorkspaceService services.WorkspaceService, logger lib.Logger) WorkspaceController {
 	return WorkspaceController{
-		service: TestService,
+		service: WorkspaceService,
 		logger:  logger,
 	}
 }

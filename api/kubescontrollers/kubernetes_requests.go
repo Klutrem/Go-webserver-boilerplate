@@ -23,33 +23,6 @@ func NewKubeController(kube_Service services.KubernetesService, logger lib.Logge
 
 }
 
-// @Summary Create a pod
-// @Tags kubernetes
-// @Accept json
-// @Produce json
-// @Param namespace path string true "Field"
-// @Param pod_name path string true "Field"
-// @Param container_name path string true "Field"
-// @Param image_type path string true "Field"
-// @Param command query []string true "Field"
-// @Description Post request
-// @Security ApiKeyAuth
-// @Router /api/kube_add [post]
-func (u KubeController) CreatePodRequest(c *gin.Context) {
-	body := models.PodBody{}
-	err := c.ShouldBindJSON(&body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
-	}
-
-	pod, err := u.Service.CreatePod(body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
-	}
-
-	c.JSON(200, pod)
-}
-
 // @Summary Get pod info/*  */
 // @Tags kubernetes
 // @Accept json

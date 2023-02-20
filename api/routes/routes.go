@@ -1,7 +1,9 @@
 package routes
 
 import (
-	routes "main/api/routes/workspaces"
+	computing "main/api/routes/computing"
+
+	workspaces "main/api/routes/workspaces"
 
 	"go.uber.org/fx"
 )
@@ -10,7 +12,8 @@ import (
 var Module = fx.Options(
 	fx.Provide(NewTestRoutes),
 	fx.Provide(NewRoutes),
-	fx.Provide(routes.NewWorkspaceRoutes),
+	fx.Provide(workspaces.NewWorkspaceRoutes),
+	fx.Provide(computing.NewComputingRoutes),
 )
 
 // Routes contains multiple routes
@@ -24,12 +27,14 @@ type Route interface {
 // NewRoutes sets up routes
 func NewRoutes(
 	TestRoutes TestRoutes,
-	WorkspaceRoutes routes.WorkspaceRoutes,
+	WorkspaceRoutes workspaces.WorkspaceRoutes,
+	ComputingRoutes computing.ComputingRoutes,
 
 ) Routes {
 	return Routes{
 		TestRoutes,
 		WorkspaceRoutes,
+		ComputingRoutes,
 	}
 }
 
