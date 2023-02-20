@@ -1,13 +1,11 @@
 package controllers
 
 import (
-	"io/ioutil"
+	"errors"
 	"main/lib"
-	"main/models"
-	"main/services"
+	models "main/models/workspaces"
+	services "main/services/workspaces"
 	"net/http"
-	"net/url"
-	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -15,17 +13,80 @@ import (
 )
 
 // TestController data type
-type TestController struct {
-	service services.TestService
+type WorkspaceController struct {
+	service services.WorkspaceService
 	logger  lib.Logger
 }
 
 // NewTestController creates new Test controller
-func NewTestController(TestService services.TestService, logger lib.Logger) TestController {
-	return TestController{
+func NewWorkspaceController(TestService services.WorkspaceService, logger lib.Logger) WorkspaceController {
+	return WorkspaceController{
 		service: TestService,
 		logger:  logger,
 	}
+}
+
+func (u WorkspaceController) ValidateCardLabel(cardLabel string) error {
+	allowedNames := []string{
+		"PV",
+		"VM",
+		"pod",
+		"ingress",
+		"service",
+		"storage",
+		"claim",
+		"endpoints",
+		"nodejs",
+		"PVC",
+		"rules",
+	}
+	for _, label := range allowedNames {
+		if strings.EqualFold(cardLabel, label) {
+			return nil
+		}
+	}
+	return errors.New("invalid CardLabel")
+}
+
+func (u WorkspaceController) ValidateCpuNumber(n int) error {
+	if 1 <= n && n <= 16 {
+		return nil
+	}
+	return errors.New("CpuNumber must be between 1 and 16")
+}
+
+func (u WorkspaceController) ValidateMemoryNumber(n int) error {
+	if 8 <= n && n <= 64 {
+		return nil
+	}
+	return errors.New("MemoryNumber must be between 8 and 64")
+}
+
+func (u WorkspaceController) ValidateStorageNumber(n int) error {
+	if 8 <= n && n <= 64 {
+		return nil
+	}
+	return errors.New("StorageNumber must be between 8 and 64")
+}
+
+func (u WorkspaceController) ValidateNode(n models.Node) error {
+	err := u.ValidateCardLabel(n.CardLabel)
+	if err != nil {
+		return err
+	}
+	err = u.ValidateCpuNumber(n.CpuNumber)
+	if err != nil {
+		return err
+	}
+	err = u.ValidateMemoryNumber(n.MemoryNumber)
+	if err != nil {
+		return err
+	}
+	err = u.ValidateStorageNumber(n.StorageNumber)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // @Summary Gets one test
@@ -35,7 +96,7 @@ func NewTestController(TestService services.TestService, logger lib.Logger) Test
 // @Produce json
 // @Security ApiKeyAuth
 // @Router /api/test/{id} [get]
-func (u TestController) GetOneWorkspace(c *gin.Context) {
+func (u WorkspaceController) GetOneWorkspace(c *gin.Context) {
 	paramID := c.Param("id")
 
 	objID, err := primitive.ObjectIDFromHex(paramID)
@@ -63,7 +124,7 @@ func (u TestController) GetOneWorkspace(c *gin.Context) {
 // @Accept */*
 // @Security ApiKeyAuth
 // @Router /api/test [get]
-func (u TestController) GetWorkspaces(c *gin.Context) {
+func (u WorkspaceController) GetWorkspaces(c *gin.Context) {
 	Tests, err := u.service.GetAllWorkspaces()
 	if err != nil || Tests == nil {
 		c.JSON(http.StatusNotFound, err)
@@ -73,7 +134,7 @@ func (u TestController) GetWorkspaces(c *gin.Context) {
 
 }
 
-func (u TestController) GetDeletedWorkspaces(c *gin.Context) {
+func (u WorkspaceController) GetDeletedWorkspaces(c *gin.Context) {
 	Deleted, err := u.service.GetDeletedWorkspaces()
 	if err != nil {
 		c.JSON(http.StatusNotFound, err)
@@ -89,7 +150,7 @@ func (u TestController) GetDeletedWorkspaces(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Param input body string true "test data"
 // @Router /api/test [post]
-func (u TestController) CreateWorkspace(c *gin.Context) {
+func (u WorkspaceController) CreateWorkspace(c *gin.Context) {
 	Workspace := models.Workspace{}
 	//trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
 
@@ -121,7 +182,7 @@ func (u TestController) CreateWorkspace(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Param input body string true "test data"
 // @Router /api/test/{id} [post]
-func (u TestController) AddNode(c *gin.Context) {
+func (u WorkspaceController) AddNode(c *gin.Context) {
 	paramID := c.Param("id")
 
 	objID, err := primitive.ObjectIDFromHex(paramID)
@@ -137,7 +198,7 @@ func (u TestController) AddNode(c *gin.Context) {
 		})
 		return
 	}
-	if err := u.service.ValidateNode(Node); err != nil {
+	if err := u.ValidateNode(Node); err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -151,7 +212,7 @@ func (u TestController) AddNode(c *gin.Context) {
 	c.JSON(200, "Workspace updated")
 }
 
-func (u TestController) AddEdge(c *gin.Context) {
+func (u WorkspaceController) AddEdge(c *gin.Context) {
 	paramID := c.Param("id")
 	objID, err := primitive.ObjectIDFromHex(paramID)
 	if err != nil {
@@ -184,7 +245,7 @@ func (u TestController) AddEdge(c *gin.Context) {
 // @Produce json
 // @Security ApiKeyAuth
 // @Router /api/test/{id} [delete]
-func (u TestController) DeleteWorkspace(c *gin.Context) {
+func (u WorkspaceController) DeleteWorkspace(c *gin.Context) {
 	paramID := c.Param("id")
 	objID, err := primitive.ObjectIDFromHex(paramID)
 	if err != nil {
@@ -201,7 +262,7 @@ func (u TestController) DeleteWorkspace(c *gin.Context) {
 	c.JSON(200, "Test deleted")
 }
 
-func (u TestController) DeleteNode(c *gin.Context) {
+func (u WorkspaceController) DeleteNode(c *gin.Context) {
 	workspace_id := c.Param("id")
 	node_id := c.Param("node_id")
 	objID, err := primitive.ObjectIDFromHex(workspace_id)
@@ -219,7 +280,7 @@ func (u TestController) DeleteNode(c *gin.Context) {
 	c.JSON(200, "Node deleted")
 }
 
-func (u TestController) UpdateNode(c *gin.Context) {
+func (u WorkspaceController) UpdateNode(c *gin.Context) {
 	Node := models.Node{}
 	workspace_id := c.Param("id")
 	objID, err := primitive.ObjectIDFromHex(workspace_id)
@@ -234,7 +295,7 @@ func (u TestController) UpdateNode(c *gin.Context) {
 		return
 	}
 
-	if err := u.service.ValidateNode(Node); err != nil {
+	if err := u.ValidateNode(Node); err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -248,26 +309,26 @@ func (u TestController) UpdateNode(c *gin.Context) {
 
 }
 
-func (u TestController) GetCode(c *gin.Context) {
-	paramcode := c.Query("code")
-	Url := "http://localhost:8080/realms/master/protocol/openid-connect/token"
-	url_form := url.Values{
-		"grant_type":    {"authorization_code"},
-		"code":          {paramcode},
-		"client_id":     {"skyfarm"},
-		"redirect_uri":  {"http://localhost:3000/get_code"},
-		"client_secret": {os.Getenv("JWT_SECRET")},
-	}
-	resp, err := http.PostForm(Url, url_form)
-	if err != nil {
-		c.String(500, err.Error())
-	}
+// func (u WorkspaceController) GetCode(c *gin.Context) {
+// 	paramcode := c.Query("code")
+// 	Url := "http://localhost:8080/realms/master/protocol/openid-connect/token"
+// 	url_form := url.Values{
+// 		"grant_type":    {"authorization_code"},
+// 		"code":          {paramcode},
+// 		"client_id":     {"skyfarm"},
+// 		"redirect_uri":  {"http://localhost:3000/get_code"},
+// 		"client_secret": {os.Getenv("JWT_SECRET")},
+// 	}
+// 	resp, err := http.PostForm(Url, url_form)
+// 	if err != nil {
+// 		c.String(500, err.Error())
+// 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		c.String(500, err.Error())
-	}
-	resp.Body.Close()
-	c.JSON(200, strings.Split(strings.Split(string(body), ",")[0], ":")[1])
-	u.logger.Info(resp)
-}
+// 	body, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		c.String(500, err.Error())
+// 	}
+// 	resp.Body.Close()
+// 	c.JSON(200, strings.Split(strings.Split(string(body), ",")[0], ":")[1])
+// 	u.logger.Info(resp)
+// }

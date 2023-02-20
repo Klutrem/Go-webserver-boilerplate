@@ -1,11 +1,16 @@
 package routes
 
-import "go.uber.org/fx"
+import (
+	routes "main/api/routes/workspaces"
+
+	"go.uber.org/fx"
+)
 
 // Module exports dependency to container
 var Module = fx.Options(
 	fx.Provide(NewTestRoutes),
 	fx.Provide(NewRoutes),
+	fx.Provide(routes.NewWorkspaceRoutes),
 )
 
 // Routes contains multiple routes
@@ -18,11 +23,13 @@ type Route interface {
 
 // NewRoutes sets up routes
 func NewRoutes(
-	userRoutes TestRoutes,
+	TestRoutes TestRoutes,
+	WorkspaceRoutes routes.WorkspaceRoutes,
 
 ) Routes {
 	return Routes{
-		userRoutes,
+		TestRoutes,
+		WorkspaceRoutes,
 	}
 }
 

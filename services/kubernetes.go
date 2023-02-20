@@ -278,10 +278,10 @@ func (u KubernetesService) DeletePod(name, namespace string) error {
 	return nil
 }
 
-func (u KubernetesService) CreateCRD() {
+func (u KubernetesService) CreateCRD() error {
 	c, err := client.New(config.GetConfigOrDie(), client.Options{})
 	if err != nil {
-		panic(err)
+		return err
 	}
 	vm := &unstructured.Unstructured{}
 	vm.Object = map[string]interface{}{
@@ -379,8 +379,9 @@ func (u KubernetesService) CreateCRD() {
 	}
 	err = c.Create(context.Background(), vm)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return err
 }
 
 func (u KubernetesService) GetPodsList(namespace string) ([]string, error) {

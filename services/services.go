@@ -1,9 +1,13 @@
 package services
 
-import "go.uber.org/fx"
+import (
+	services "main/services/workspaces"
+
+	"go.uber.org/fx"
+)
 
 // Module exports services present
 var Module = fx.Options(
-	fx.Provide(NewTestService),
+	fx.Provide(services.NewWorkspaceService),
 	fx.Provide(NewKubernetesService),
 )

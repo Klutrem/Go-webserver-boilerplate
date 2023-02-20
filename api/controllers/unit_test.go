@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"main/api/controllers"
+	controllers "main/api/controllers/workspaces"
 	"main/lib"
-	"main/models"
-	"main/repository"
-	"main/services"
+	models "main/models/workspaces"
+	repository "main/repository/workspaces"
+	services "main/services/workspaces"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -24,9 +24,9 @@ import (
 )
 
 type test struct {
-	Collection     mongo.Collection
-	Workspace_id   string
-	Testcontroller controllers.TestController
+	Collection          mongo.Collection
+	Workspace_id        string
+	Workspacecontroller controllers.WorkspaceController
 }
 
 var Test test
@@ -35,7 +35,7 @@ func TestWorkspaceError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	r.GET("/", Test.Testcontroller.GetWorkspaces)
+	r.GET("/", Test.Workspacecontroller.GetWorkspaces)
 	ctx.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusNotFound, w.Code)
@@ -46,7 +46,7 @@ func TestCreateWorkspaceError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	r.POST("/", Test.Testcontroller.CreateWorkspace)
+	r.POST("/", Test.Workspacecontroller.CreateWorkspace)
 	ctx.Request = httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(faker.Word())))
 
 	r.ServeHTTP(w, ctx.Request)
@@ -60,7 +60,7 @@ func TestCreateWorkspace(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	r.POST("/", Test.Testcontroller.CreateWorkspace)
+	r.POST("/", Test.Workspacecontroller.CreateWorkspace)
 	jsonbytes, err := json.Marshal(workspace)
 	if err != nil {
 		panic(err.Error())
@@ -95,7 +95,7 @@ func TestAddNode(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	r.POST("/:id", Test.Testcontroller.AddNode)
+	r.POST("/:id", Test.Workspacecontroller.AddNode)
 	jsonbytes, err := json.Marshal(node)
 	if err != nil {
 		panic(err.Error())
@@ -154,7 +154,7 @@ func TestUpdateNode(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	r.POST("/:id", Test.Testcontroller.UpdateNode)
+	r.POST("/:id", Test.Workspacecontroller.UpdateNode)
 	jsonbytes, err := json.Marshal(node)
 	if err != nil {
 		panic(err.Error())
@@ -187,7 +187,7 @@ func TestGetOneWorkspace(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	r.GET("/:id", Test.Testcontroller.GetOneWorkspace)
+	r.GET("/:id", Test.Workspacecontroller.GetOneWorkspace)
 	ctx.Request, _ = http.NewRequest(http.MethodGet, "/"+faker.Word(), nil)
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
@@ -202,7 +202,7 @@ func TestGetWorkspaces(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	r.GET("/", Test.Testcontroller.GetWorkspaces)
+	r.GET("/", Test.Workspacecontroller.GetWorkspaces)
 	ctx.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -212,7 +212,7 @@ func TestDeleteNode(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	r.DELETE("/:id/:node_id", Test.Testcontroller.DeleteNode)
+	r.DELETE("/:id/:node_id", Test.Workspacecontroller.DeleteNode)
 	TestAddNode(t)
 	ctx.Request = httptest.NewRequest(http.MethodDelete, "/"+Test.Workspace_id+"/2", nil)
 	r.ServeHTTP(w, ctx.Request)
@@ -235,7 +235,7 @@ func TestDeleteWorkspace(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	r.DELETE("/:id", Test.Testcontroller.DeleteWorkspace)
+	r.DELETE("/:id", Test.Workspacecontroller.DeleteWorkspace)
 	ctx.Request, _ = http.NewRequest(http.MethodDelete, "/"+Test.Workspace_id, nil)
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -254,7 +254,7 @@ func TestMain(m *testing.M) {
 	collection := client.Database("test").Collection("test_collection")
 
 	Test.Collection = *collection
-	u := controllers.NewTestController(services.NewTestService(lib.Logger{}, repository.NewTestRepository(lib.Database{Collection: &Test.Collection}, lib.Logger{})), lib.Logger{})
-	Test.Testcontroller = u
+	u := controllers.NewWorkspaceController(services.NewWorkspaceService(lib.Logger{}, repository.NewWorkspaceRepository(lib.Database{Collection: &Test.Collection}, lib.Logger{})), lib.Logger{})
+	Test.Workspacecontroller = u
 	m.Run()
 }
